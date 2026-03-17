@@ -7,12 +7,12 @@ function showSection(sectionId) {
     if (targetSection) targetSection.classList.remove('hidden');
 
     if(sectionId === 'terrain') resizeCanvas();
-    if(sectionId === 'drill') populateDrillForm(); // Remplir les listes du drill
+    if(sectionId === 'drill') populateDrillForm(); 
 }
 
 // --- LOGIQUE DU MODULE MATÉRIEL (PROFIL) ---
 let inventory = JSON.parse(localStorage.getItem('airsoftInventory')) || [];
-function renderInventory() { /* ... Code existant inchangé, voir version précédente ... */ 
+function renderInventory() { 
     const listContainer = document.getElementById('equipment-list');
     if (!listContainer) return;
     listContainer.innerHTML = '';
@@ -79,16 +79,14 @@ function saveApiKey() {
     alert("Clé API sauvegardée !");
 }
 
-// 2. Peupler les listes déroulantes et checkboxes avant de générer
+// 2. Peupler les listes déroulantes
 function populateDrillForm() {
-    // Terrain
     const terrainSelect = document.getElementById('drill-terrain-select');
     terrainSelect.innerHTML = '<option value="">-- Sélectionnez un terrain enregistré --</option>';
     terrains.forEach((t, i) => {
         terrainSelect.innerHTML += `<option value="${i}">${t.name} (${t.type})</option>`;
     });
 
-    // Checkboxes Matériel Logistique
     const matContainer = document.getElementById('drill-material-checkboxes');
     matContainer.innerHTML = '';
     if (logisticsItems.length === 0) {
@@ -114,23 +112,18 @@ document.getElementById('generate-drill-btn').addEventListener('click', async ()
     if (!apiKey) return alert("Veuillez entrer et sauvegarder une clé API Gemini.");
     if (terrainIndex === "") return alert("Veuillez sélectionner un terrain.");
 
-    // Récupérer le terrain sélectionné
     const selectedTerrain = terrains[terrainIndex];
 
-    // Récupérer le matériel coché
     let selectedMaterials = [];
     document.querySelectorAll('#drill-material-checkboxes input[type="checkbox"]:checked').forEach(chk => {
         selectedMaterials.push(`${chk.value} (x${chk.getAttribute('data-qty')})`);
     });
 
-    // Récupérer les sources doc (seulement les titres et types pour le contexte LLM)
     let docContext = logisticsDocs.map(d => `- ${d.title} (${d.type})`).join("\n");
 
-    // Afficher le chargement
     document.getElementById('drill-loading').style.display = "block";
     document.getElementById('drill-result-content').style.display = "none";
 
-    // 4. Construction du SUPER PROMPT pour l'IA
     const systemPrompt = `
     Tu es un instructeur expert en entraînement tactique Airsoft. 
     L'utilisateur te demande de créer un exercice (Drill).
@@ -160,13 +153,13 @@ document.getElementById('generate-drill-btn').addEventListener('click', async ()
     `;
 
     try {
-        // Appel à l'API Gemini (Utilisation du modèle gemini-1.5-flash pour la rapidité JSON)
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+        // CORRECTION ICI : Changement du nom du modèle vers gemini-1.5-flash-latest
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 contents: [{ parts: [{ text: systemPrompt }] }],
-                generationConfig: { response_mime_type: "application/json" } // Force le retour JSON
+                generationConfig: { response_mime_type: "application/json" }
             })
         });
 
@@ -179,11 +172,9 @@ document.getElementById('generate-drill-btn').addEventListener('click', async ()
         const aiResponseText = data.candidates[0].content.parts[0].text;
         const resultJSON = JSON.parse(aiResponseText);
 
-        // 5. Affichage des résultats
         document.getElementById('drill-loading').style.display = "none";
         document.getElementById('drill-result-content').style.display = "block";
 
-        // Afficher le texte Markdown (Converti très basiquement en HTML)
         const textContainer = document.getElementById('drill-result-text');
         textContainer.innerHTML = resultJSON.markdown_text
             .replace(/^### (.*$)/gim, '<h3>$1</h3>')
@@ -191,7 +182,6 @@ document.getElementById('generate-drill-btn').addEventListener('click', async ()
             .replace(/\*\*(.*)\*\*/gim, '<strong>$1</strong>')
             .replace(/\n/gim, '<br>');
 
-        // 6. Dessiner sur le Canvas de Résultat
         drawResultCanvas(selectedTerrain, resultJSON.map_overlays);
 
     } catch (error) {
@@ -201,15 +191,12 @@ document.getElementById('generate-drill-btn').addEventListener('click', async ()
     }
 });
 
-// Fonction pour redessiner le terrain + superposer les tactiques de l'IA
 function drawResultCanvas(terrain, overlays) {
     const resCanvas = document.getElementById('drill-result-canvas');
-    // On donne au canvas de résultat les mêmes proportions que l'éditeur
     resCanvas.width = 900; 
     resCanvas.height = 500;
     const resCtx = resCanvas.getContext('2d');
     
-    // 1. Redessiner le terrain de base
     resCtx.clearRect(0, 0, resCanvas.width, resCanvas.height);
     terrain.data.forEach(el => {
         if (el.type === 'brush_in' || el.type === 'brush_out') {
@@ -239,11 +226,9 @@ function drawResultCanvas(terrain, overlays) {
         }
     });
 
-    // 2. Dessiner les ajouts de l'IA (overlays)
     if(overlays && overlays.length > 0) {
         overlays.forEach(item => {
             if (item.type === 'target') {
-                // Dessiner une cible (cercle rouge)
                 resCtx.beginPath();
                 resCtx.arc(item.x, item.y, 10, 0, 2 * Math.PI);
                 resCtx.fillStyle = '#e74c3c';
@@ -251,12 +236,10 @@ function drawResultCanvas(terrain, overlays) {
                 resCtx.lineWidth = 2;
                 resCtx.strokeStyle = '#c0392b';
                 resCtx.stroke();
-                // Croix dedans
                 resCtx.beginPath(); resCtx.moveTo(item.x-10, item.y); resCtx.lineTo(item.x+10, item.y); resCtx.stroke();
                 resCtx.beginPath(); resCtx.moveTo(item.x, item.y-10); resCtx.lineTo(item.x, item.y+10); resCtx.stroke();
             
             } else if (item.type === 'start_point') {
-                // Point de départ (carré vert)
                 resCtx.fillStyle = '#2ecc71';
                 resCtx.fillRect(item.x - 10, item.y - 10, 20, 20);
                 resCtx.fillStyle = '#fff';
@@ -264,7 +247,6 @@ function drawResultCanvas(terrain, overlays) {
                 resCtx.fillText("Départ", item.x, item.y - 15);
             
             } else if (item.type === 'path' && item.points && item.points.length > 0) {
-                // Dessiner le chemin (ligne pointillée jaune)
                 resCtx.beginPath();
                 resCtx.setLineDash([5, 10]);
                 resCtx.strokeStyle = '#f1c40f';
@@ -274,13 +256,12 @@ function drawResultCanvas(terrain, overlays) {
                     resCtx.lineTo(item.points[i].x, item.points[i].y);
                 }
                 resCtx.stroke();
-                resCtx.setLineDash([]); // Reset
+                resCtx.setLineDash([]); 
             }
         });
     }
 }
 
-// --- INITIALISATION AU DÉMARRAGE ---
 document.addEventListener("DOMContentLoaded", () => {
     showSection('profil');
     renderInventory();
