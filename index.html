@@ -13,6 +13,25 @@
 </head>
 <body>
 
+    <div id="auth-modal" class="modal hidden">
+        <div class="modal-content panel">
+            <span class="close-btn" onclick="closeAuthModal()">&times;</span>
+            <h3 style="border-bottom: none; margin-bottom: 20px;">🔐 Accès Armurerie</h3>
+            <div class="form-group">
+                <input type="email" id="auth-email" placeholder="Adresse Email">
+            </div>
+            <div class="form-group">
+                <input type="password" id="auth-password" placeholder="Mot de passe">
+            </div>
+            <button class="btn-submit" onclick="loginWithEmail()">Se Connecter</button>
+            <button class="btn-submit" onclick="registerWithEmail()" style="background-color: #3498db; margin-top: 10px;">Créer un compte</button>
+            
+            <hr style="margin: 20px 0; border: 0; border-top: 1px solid #444;">
+            
+            <button class="btn-submit" onclick="loginWithGoogle()" style="background-color: #e74c3c;">Continuer avec Google</button>
+        </div>
+    </div>
+
     <nav class="sidebar">
         <h2>Drill<span class="highlight">App</span></h2>
         <ul>
@@ -193,13 +212,12 @@
 
                     <div class="form-group">
                         <label>🚧 Matériel Logistique à utiliser (Optionnel)</label>
-                        <div id="drill-material-checkboxes" class="checkbox-list">
-                            </div>
+                        <div id="drill-material-checkboxes" class="checkbox-list"></div>
                     </div>
 
                     <div class="form-group">
-                        <label for="drill-prompt">💬 Demande Particulière (Objectif, nb de joueurs, contraintes...)</label>
-                        <textarea id="drill-prompt" rows="5" placeholder="Ex: Je veux un drill solo type CQB. Départ à la porte, engagement de 3 cibles avec transition arme de poing au milieu du parcours."></textarea>
+                        <label for="drill-prompt">💬 Demande Particulière</label>
+                        <textarea id="drill-prompt" rows="5" placeholder="Ex: Je veux un drill solo type CQB. Départ à la porte, engagement de 3 cibles..."></textarea>
                     </div>
 
                     <button id="generate-drill-btn" class="btn-submit" style="font-size: 1.1em; padding: 15px;">🚀 GÉNÉRER LE DRILL TACTIQUE</button>
