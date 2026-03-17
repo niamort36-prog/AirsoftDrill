@@ -325,7 +325,7 @@ document.getElementById('generate-drill-btn').addEventListener('click', async ()
     "${userPrompt}"
     
     INSTRUCTION DE SORTIE STRICTE :
-    Tu DOIS répondre UNIQUEMENT avec un objet JSON valide (aucun autre texte avant ou après).
+    Tu DOIS répondre UNIQUEMENT avec un objet JSON valide. N'ajoute AUCUN texte autour (pas de \`\`\`json).
     Le JSON doit avoir exactement cette structure :
     {
         "markdown_text": "Explication complète du drill en markdown.",
@@ -338,20 +338,55 @@ document.getElementById('generate-drill-btn').addEventListener('click', async ()
     Notes : Coordonnées (x,y) sur 900x500. Place les cibles logiquement.
     `;
 
+    // 🔴 LE SYSTÈME DE FALLBACK : On essaie plusieurs modèles à la suite
+    const modelsToTry = ['gemini-1.5-flash', 'gemini-pro'];
+    let aiResponseText = null;
+
+    for (const model of modelsToTry) {
+        try {
+            console.log(`Tentative de génération avec le modèle : ${model}...`);
+            const bodyData = { contents: [{ parts: [{ text: systemPrompt }] }] };
+            
+            // On désactive le forçage JSON pour l'ancien modèle (gemini-pro) pour éviter une erreur
+            if (model !== 'gemini-pro') {
+                bodyData.generationConfig = { response_mime_type: "application/json" };
+            }
+
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(bodyData)
+            });
+
+            const data = await response.json();
+
+            if (data.error) {
+                // Si l'erreur concerne l'accès au modèle, on passe silencieusement au suivant
+                if (data.error.code === 404 || data.error.message.includes('not found') || data.error.message.includes('not supported')) {
+                    console.warn(`Modèle ${model} refusé, passage au modèle de secours...`);
+                    continue; 
+                }
+                // Si c'est une autre erreur (clé invalide, etc.), on stoppe
+                throw new Error(data.error.message);
+            }
+
+            aiResponseText = data.candidates[0].content.parts[0].text;
+            break; // Succès ! On sort de la boucle de tentative
+
+        } catch (error) {
+            console.warn(`Échec avec ${model}:`, error);
+            if (model === modelsToTry[modelsToTry.length - 1]) {
+                document.getElementById('drill-loading').style.display = "none";
+                return alert("Erreur lors de la communication avec l'IA : " + error.message);
+            }
+        }
+    }
+
+    if (!aiResponseText) return; // Sécurité
+
     try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: systemPrompt }] }],
-                generationConfig: { response_mime_type: "application/json" }
-            })
-        });
-
-        const data = await response.json();
-        if(data.error) throw new Error(data.error.message);
-
-        const aiResponseText = data.candidates[0].content.parts[0].text;
+        // Nettoyage agressif au cas où l'IA rajoute des balises Markdown de code
+        aiResponseText = aiResponseText.replace(/```json/gi, '').replace(/```/gi, '').trim();
         const resultJSON = JSON.parse(aiResponseText);
 
         document.getElementById('drill-loading').style.display = "none";
@@ -368,8 +403,8 @@ document.getElementById('generate-drill-btn').addEventListener('click', async ()
 
     } catch (error) {
         document.getElementById('drill-loading').style.display = "none";
-        alert("Erreur lors de la communication avec l'IA : " + error.message);
-        console.error(error);
+        alert("L'IA a généré un format illisible. Essayez de reformuler légèrement la demande.");
+        console.error("Erreur parsing JSON:", error, "Texte brut:", aiResponseText);
     }
 });
 
@@ -411,26 +446,4 @@ function drawResultCanvas(terrain, overlays) {
                 resCtx.beginPath(); resCtx.moveTo(item.x-10, item.y); resCtx.lineTo(item.x+10, item.y); resCtx.stroke();
                 resCtx.beginPath(); resCtx.moveTo(item.x, item.y-10); resCtx.lineTo(item.x, item.y+10); resCtx.stroke();
             } else if (item.type === 'start_point') {
-                resCtx.fillStyle = '#2ecc71'; resCtx.fillRect(item.x - 10, item.y - 10, 20, 20);
-                resCtx.fillStyle = '#fff'; resCtx.font = "12px Arial"; resCtx.fillText("Départ", item.x, item.y - 15);
-            } else if (item.type === 'path' && item.points && item.points.length > 0) {
-                resCtx.beginPath(); resCtx.setLineDash([5, 10]); resCtx.strokeStyle = '#f1c40f'; resCtx.lineWidth = 3;
-                resCtx.moveTo(item.points[0].x, item.points[0].y);
-                for(let i=1; i<item.points.length; i++) resCtx.lineTo(item.points[i].x, item.points[i].y);
-                resCtx.stroke(); resCtx.setLineDash([]); 
-            }
-        });
-    }
-}
-
-// =========================================================================
-// --- INITIALISATION AU DÉMARRAGE ---
-// =========================================================================
-document.addEventListener("DOMContentLoaded", () => {
-    showSection('profil');
-    renderAllViews();
-    
-    window.addEventListener('resize', () => {
-        if(document.getElementById('terrain').classList.contains('hidden') === false) { resizeCanvas(); }
-    });
-});
+                resCtx.fillStyle = '#2ecc71'; resCtx.
