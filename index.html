@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Airsoft Drill AI</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <nav class="sidebar">
+        <h2>Drill<span class="highlight">App</span></h2>
+        <ul>
+            <li><a href="#" onclick="showSection('profil')">👤 Profil & Matériel</a></li>
+            <li><a href="#" onclick="showSection('terrain')">🗺️ Terrains</a></li>
+            <li><a href="#" onclick="showSection('logistique')">🎯 Logistique (Cibles)</a></li>
+            <li><a href="#" onclick="showSection('drill')">⚡ Création de Drill</a></li>
+        </ul>
+        <div class="auth-section">
+            <button id="login-btn">Se connecter</button>
+        </div>
+    </nav>
+
+    <main class="content">
+        
+        <section id="profil" class="view-section active">
+            <h1>Profil & Matériel</h1>
+            <p>Gérez votre inventaire. Ces informations aideront l'IA à adapter vos drills.</p>
+            
+            <div class="dashboard-grid">
+                <div class="panel">
+                    <h3>➕ Ajouter un équipement</h3>
+                    <form id="equipment-form">
+                        <div class="form-group">
+                            <label for="eq-category">Catégorie</label>
+                            <select id="eq-category" required>
+                                <option value="Réplique Principale">Réplique Principale</option>
+                                <option value="Réplique Secondaire">Réplique Secondaire (PA)</option>
+                                <option value="Gilet / Ceinture">Gilet Tactique / Ceinture</option>
+                                <option value="Tenue">Tenue / Camo</option>
+                                <option value="Accessoire">Accessoires (Casque, Radio...)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="eq-name">Modèle / Nom</label>
+                            <input type="text" id="eq-name" placeholder="Ex: M4A1 Tokyo Marui..." required>
+                        </div>
+                        <div class="form-group">
+                            <label for="eq-details">Détails (Optiques, chargeurs, etc.)</label>
+                            <textarea id="eq-details" rows="3" placeholder="Ex: Red dot, 4 chargeurs..."></textarea>
+                        </div>
+                        <button type="submit" class="btn-submit">Ajouter à l'inventaire</button>
+                    </form>
+                </div>
+
+                <div class="panel">
+                    <h3>🎒 Mon Inventaire</h3>
+                    <div id="equipment-list" class="equipment-grid"></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="terrain" class="view-section hidden">
+            <h1>Terrains & Cartographie</h1>
+            <p>Dessinez vos zones d'entraînement, ajoutez une photo de présentation et précisez les dimensions.</p>
+            
+            <div class="dashboard-grid">
+                <div class="panel" style="grid-column: 1 / -1;">
+                    <h3>🗺️ Éditeur de Plan <span id="edit-mode-indicator" style="color: #e67e22; display: none;">(Mode Édition)</span></h3>
+                    
+                    <div class="terrain-header">
+                        <input type="text" id="terrain-name" placeholder="Nom du terrain (ex: Entrepôt Alpha)" required>
+                        <select id="terrain-type">
+                            <option value="Intérieur">Intérieur</option>
+                            <option value="Extérieur">Extérieur</option>
+                            <option value="Mixte">Mixte</option>
+                        </select>
+                        <div class="file-input-wrapper">
+                            <label for="terrain-photo-input">📸 Ajouter une photo</label>
+                            <input type="file" id="terrain-photo-input" accept="image/*">
+                        </div>
+                        <button class="btn-submit" onclick="saveTerrain()" style="width: auto; padding: 10px 20px;">💾 Sauvegarder le terrain</button>
+                    </div>
+
+                    <div class="canvas-toolbar">
+                        <span class="tool-group">Zones :</span>
+                        <button class="tool-btn" onclick="setTool('rect')">🟩 Zone (Rect)</button>
+                        <button class="tool-btn" onclick="setTool('brush_in')">🖌️ Pinceau Int.</button>
+                        <button class="tool-btn" onclick="setTool('brush_out')">🌲 Pinceau Ext.</button>
+                        
+                        <span class="tool-group">Structure :</span>
+                        <button class="tool-btn active" onclick="setTool('wall')">🧱 Mur</button>
+                        <button class="tool-btn" onclick="setTool('door_single')">🚪 Porte Simple</button>
+                        <button class="tool-btn" onclick="setTool('door_double')">🚪 Porte Double</button>
+                        <button class="tool-btn" onclick="setTool('window')">🪟 Fenêtre</button>
+                        
+                        <button class="tool-btn" onclick="clearCanvas()" style="background-color: #a00; margin-left: auto;">🗑️ Effacer</button>
+                    </div>
+
+                    <canvas id="terrain-canvas" width="900" height="500"></canvas>
+                    <p style="font-size: 0.8em; color: #888; margin-top: 5px;">* Échelle : 1m = 20px environ. Les cotes s'affichent automatiquement.</p>
+                </div>
+
+                <div class="panel" style="grid-column: 1 / -1;">
+                    <h3>📂 Mes Terrains Enregistrés</h3>
+                    <div id="terrain-list" class="equipment-grid terrain-grid"></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="logistique" class="view-section hidden">
+            <h1>Logistique & Documentation</h1>
+            <p>Gérez votre matériel de terrain pour les ateliers et stockez vos documents de référence.</p>
+            
+            <div class="dashboard-grid">
+                <div class="panel">
+                    <h3>🚧 Matériel de Terrain</h3>
+                    <form id="logistics-item-form">
+                        <div class="form-group">
+                            <label for="log-item-name">Nom de l'équipement (ex: Cônes, Barricades...)</label>
+                            <input type="text" id="log-item-name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="log-item-qty">Quantité possédée</label>
+                            <input type="number" id="log-item-qty" min="1" value="1" required>
+                        </div>
+                        <div class="form-group">
+                            <label>📸 Photo (Optionnel)</label>
+                            <div class="file-input-wrapper">
+                                <label for="log-item-photo" id="log-item-photo-label">Choisir une image</label>
+                                <input type="file" id="log-item-photo" accept="image/*">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-submit">Ajouter au matériel</button>
+                    </form>
+                    <div id="logistics-item-list" class="equipment-grid" style="margin-top: 20px;"></div>
+                </div>
+
+                <div class="panel">
+                    <h3>📚 Documentation & Cibles</h3>
+                    <form id="logistics-doc-form">
+                        <div class="form-group">
+                            <label for="log-doc-title">Titre du document</label>
+                            <input type="text" id="log-doc-title" placeholder="Ex: Drill El Presidente..." required>
+                        </div>
+                        <div class="form-group">
+                            <label for="log-doc-type">Type</label>
+                            <select id="log-doc-type">
+                                <option value="Modèle de Drill">Modèle de Drill</option>
+                                <option value="Cible Particulière">Cible Particulière</option>
+                                <option value="Manuel / Autre">Manuel / Autre</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>📄 Fichier (Image ou PDF)</label>
+                            <div class="file-input-wrapper">
+                                <label for="log-doc-file" id="log-doc-file-label">Importer un fichier</label>
+                                <input type="file" id="log-doc-file" accept="image/*,application/pdf" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-submit">Ajouter à la bibliothèque</button>
+                    </form>
+                    <div id="logistics-doc-list" class="equipment-grid" style="margin-top: 20px;"></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="drill" class="view-section hidden">
+            <h1>Création de Drill (Propulsé par Gemini AI)</h1>
+            <p>Configurez les paramètres ci-dessous et laissez l'IA concevoir votre parcours tactique sur mesure.</p>
+
+            <div class="api-key-section">
+                <label for="gemini-api-key">🔑 Clé API Google Gemini :</label>
+                <input type="password" id="gemini-api-key" placeholder="Collez votre clé API ici pour activer l'IA...">
+                <button onclick="saveApiKey()" class="btn-submit" style="width: auto; padding: 10px;">Enregistrer</button>
+            </div>
+
+            <div class="dashboard-grid drill-generator-grid">
+                <div class="panel">
+                    <h3>⚙️ Paramètres du Drill</h3>
+                    
+                    <div class="form-group">
+                        <label for="drill-terrain-select">🗺️ Choisir un Terrain</label>
+                        <select id="drill-terrain-select">
+                            <option value="">-- Sélectionnez un terrain enregistré --</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>🚧 Matériel Logistique à utiliser (Optionnel)</label>
+                        <div id="drill-material-checkboxes" class="checkbox-list">
+                            </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="drill-prompt">💬 Demande Particulière (Objectif, nb de joueurs, contraintes...)</label>
+                        <textarea id="drill-prompt" rows="5" placeholder="Ex: Je veux un drill solo type CQB. Départ à la porte, engagement de 3 cibles avec transition arme de poing au milieu du parcours."></textarea>
+                    </div>
+
+                    <button id="generate-drill-btn" class="btn-submit" style="font-size: 1.1em; padding: 15px;">🚀 GÉNÉRER LE DRILL TACTIQUE</button>
+                </div>
+
+                <div class="panel result-panel">
+                    <h3>🎯 Résultat de l'IA</h3>
+                    
+                    <div id="drill-loading" style="display: none; text-align: center; color: #6b8e23; margin: 20px 0;">
+                        <p>🧠 Gemini analyse votre terrain, votre inventaire et vos sources...</p>
+                        <p>Construction du parcours tactique en cours ⏳</p>
+                    </div>
+
+                    <div id="drill-result-content" style="display: none;">
+                        <div class="result-canvas-container">
+                            <canvas id="drill-result-canvas" width="600" height="400"></canvas>
+                        </div>
+                        
+                        <div id="drill-result-text" class="markdown-body"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>
