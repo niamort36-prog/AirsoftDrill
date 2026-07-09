@@ -216,6 +216,7 @@
                         <button type="button" id="save-api-btn" class="btn-submit btn-inline">Enregistrer</button>
                     </div>
                     <p class="hint">La clé reste uniquement dans ce navigateur — elle n'est jamais envoyée ailleurs qu'à l'API Google.</p>
+                    <p class="hint">💡 Quota gratuit : <strong>Flash</strong> et <strong>Flash Lite</strong> offrent de nombreuses requêtes par jour ; <strong>Pro</strong> est épuisé en 1-2 essais sans facturation. En cas de saturation ou de quota épuisé, l'app bascule automatiquement de modèle.</p>
                 </div>
             </div>
 
@@ -248,7 +249,13 @@
                         <textarea id="drill-prompt" rows="4" placeholder="Ex: Drill CQB à 2 pax, départ porte sud, engagement de 3 cibles, priorité à la communication..."></textarea>
                     </div>
 
+                    <div class="checkbox-item standalone-check">
+                        <input type="checkbox" id="include-docs-chk">
+                        <label for="include-docs-chk">📎 Joindre les supports (PDF/images) — consomme beaucoup de quota</label>
+                    </div>
+
                     <button type="button" id="generate-drill-btn" class="btn-submit btn-generate">🚀 Générer le drill tactique</button>
+                    <button type="button" id="manual-drill-btn" class="btn-secondary">🖊️ Mode manuel — annoter la carte sans IA</button>
                     <div id="drill-error" class="alert-error hidden" role="alert"></div>
                 </div>
 
@@ -257,18 +264,33 @@
 
                     <div id="drill-loading" class="drill-loading hidden" aria-live="polite">
                         <div class="spinner" aria-hidden="true"></div>
-                        <p>L'IA analyse votre terrain, vos pax et vos supports...</p>
+                        <p id="drill-loading-status">L'IA analyse votre terrain, vos pax et vos supports…</p>
                     </div>
 
                     <div id="drill-result-content" class="hidden">
+                        <p id="drill-model-info" class="hint hidden"></p>
+
+                        <div id="annot-toolbar" class="canvas-toolbar annot-toolbar" role="toolbar" aria-label="Annotations manuelles sur la carte">
+                            <span class="tool-group">Annoter :</span>
+                            <button type="button" class="tool-btn" data-tool="pen">✏️ Crayon</button>
+                            <button type="button" class="tool-btn" data-tool="arrow">➡️ Flèche</button>
+                            <button type="button" class="tool-btn" data-tool="target">🎯 Cible</button>
+                            <button type="button" class="tool-btn" data-tool="start">🚩 Départ</button>
+                            <button type="button" class="tool-btn" data-tool="text">🔤 Texte</button>
+                            <span class="toolbar-spacer"></span>
+                            <button type="button" id="annot-undo" class="tool-btn">↩️ Annuler</button>
+                            <button type="button" id="annot-clear" class="tool-btn tool-btn-danger">🗑️ Effacer</button>
+                        </div>
+
                         <div class="result-canvas-container">
-                            <canvas id="drill-result-canvas" aria-label="Carte du drill annotée par l'IA"></canvas>
+                            <canvas id="drill-result-canvas" aria-label="Carte du drill : annotations de l'IA et annotations manuelles"></canvas>
                         </div>
                         <div class="result-legend" aria-hidden="true">
                             <span><i class="lg lg-start"></i> Départ</span>
                             <span><i class="lg lg-target"></i> Cible</span>
                             <span><i class="lg lg-path"></i> Trajet</span>
                             <span><i class="lg lg-zone"></i> Zone</span>
+                            <span><i class="lg lg-annot"></i> Vos annotations</span>
                         </div>
                         <div id="drill-result-text" class="markdown-body"></div>
                     </div>

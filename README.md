@@ -66,8 +66,17 @@ migrées automatiquement au premier lancement.
   sont validés et bornés au terrain avant affichage.
 - Modèles proposés : Gemini 2.5 Flash (défaut), 2.5 Pro, 2.5 Flash Lite. La sortie JSON
   est contrainte par `responseMimeType` + `responseSchema`.
-- Les supports (PDF, images, textes) sont **joints à la requête** (budget 6 Mo) pour que
-  l'IA s'en inspire réellement.
+- **Résilience** : en cas de saturation (« high demand », 503) l'appel est retenté avec
+  délai croissant puis bascule sur les autres modèles ; un **quota épuisé (429)** bascule
+  immédiatement sans gaspiller d'essais. L'utilisateur voit chaque étape.
+- **Quotas gratuits** : Flash et Flash-Lite offrent un quota journalier confortable ;
+  Pro est quasi inutilisable sans facturation — il est donc en dernier dans la chaîne de
+  repli. Le quota se réinitialise chaque jour (~9h heure de Paris).
+- **Économie de tokens** : plan du terrain compacté avant envoi (coordonnées arrondies,
+  traits de pinceau sous-échantillonnés) ; supports (PDF/images/textes) joints seulement
+  si la case est cochée (budget 6 Mo) car ils consomment beaucoup de quota.
+- **Mode manuel** : la carte de résultat est annotable à la main (crayon, flèche, cibles,
+  départ, consignes texte) — par-dessus un résultat IA pour l'ajuster, ou sans IA du tout.
 
 ### Gestion de la clé API (important)
 
@@ -83,7 +92,8 @@ un quota par utilisateur — hors périmètre GitHub Pages.
 - [ ] Historique des drills générés (sauvegarde du résultat en IndexedDB).
 - [ ] Export du drill en PDF / impression (briefing + carte).
 - [ ] Envoi de la **photo du terrain** à l'IA en plus du plan vectoriel.
-- [ ] Éditer les overlays proposés par l'IA (déplacer une cible à la main).
+- [ ] Déplacer/supprimer individuellement les overlays proposés par l'IA (l'ajout
+      d'annotations manuelles par-dessus est déjà possible).
 - [ ] Support d'autres fournisseurs d'IA (Claude, OpenAI) dans `js/ai.js` — l'interface
       `generateDrill` est déjà indépendante du fournisseur.
 - [ ] Proxy serverless optionnel pour une clé mutualisée.
