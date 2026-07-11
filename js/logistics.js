@@ -51,7 +51,7 @@ const Logistics = (() => {
             currentItemPhoto = null;
             document.getElementById('log-item-photo-label').textContent = ITEM_PHOTO_LABEL;
             renderItems();
-            if (window.Drill) Drill.populate();
+            if (typeof Drill !== 'undefined') Drill.populate();
         }
     }
 
@@ -63,7 +63,7 @@ const Logistics = (() => {
         if (await Store.deleteLogisticsItem(item.id)) {
             UI.toast('Matériel supprimé', 'info');
             renderItems();
-            if (window.Drill) Drill.populate();
+            if (typeof Drill !== 'undefined') Drill.populate();
         }
     }
 

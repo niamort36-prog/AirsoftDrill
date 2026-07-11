@@ -75,25 +75,46 @@ const AI = (() => {
                 if (!pts.length) pts = [{ x: Math.round(el.points[0].x), y: Math.round(el.points[0].y) }];
                 return { type: el.type, points: pts };
             }
-            return {
+            if (el.type === 'cover_rect') {
+                return {
+                    type: el.type, kind: el.kind,
+                    x: Math.round(el.x), y: Math.round(el.y),
+                    w: Math.round(el.w), h: Math.round(el.h),
+                    rot: Math.round((el.rot || 0) * 100) / 100
+                };
+            }
+            if (el.type === 'start_point') {
+                return { type: el.type, label: el.label || '', x: Math.round(el.x), y: Math.round(el.y) };
+            }
+            const seg = {
                 type: el.type,
                 x1: Math.round(el.x1), y1: Math.round(el.y1),
                 x2: Math.round(el.x2), y2: Math.round(el.y2)
             };
+            if (el.kind) seg.kind = el.kind; // cover_line : muret / palissade
+            return seg;
         });
     }
 
     function describeElements(terrain) {
         // Légende explicite : l'IA doit comprendre la topographie pour placer
         // cibles et trajets de façon cohérente (pas dans un mur).
+        const coverLegend = Object.entries(Schema.COVER_KINDS)
+            .map(([id, k]) => `  - ${id} : ${k.desc}`);
         return [
             'Légende des éléments ("type") :',
             '- wall : mur infranchissable (segment x1,y1 -> x2,y2)',
-            '- door_single / door_double : porte franchissable (segment)',
+            '- door_single / door_double : porte intégrée dans un mur, franchissable (0,9 m / 1,8 m)',
             '- window : fenêtre (ligne de vue / tir possible, pas de passage)',
             '- rect : zone rectangulaire (x1,y1 = coin, x2,y2 = coin opposé)',
             '- brush_in : zone intérieure peinte (liste de points)',
             '- brush_out : zone extérieure/végétation peinte (liste de points)',
+            '- cover_line : protection linéaire (segment, voir "kind")',
+            '- cover_rect : protection posée, centre x,y, dimensions w,h en px, rotation rot en radians (voir "kind")',
+            '- start_point : point de départ POSSIBLE défini par l\'utilisateur (libellé D1, D2...)',
+            '',
+            'Protections ("kind") — exploite-les dans les placements et le déroulé :',
+            ...coverLegend,
             '',
             'Éléments du terrain (JSON) :',
             JSON.stringify(compactElements(terrain.elements))
@@ -121,6 +142,13 @@ Conçois un exercice (drill) réaliste, progressif et sécurisé à partir du co
 - Dimensions du plan : ${W} x ${H} pixels. Échelle : ${PPM} px = 1 mètre (terrain d'environ ${(W / PPM).toFixed(0)} m x ${(H / PPM).toFixed(0)} m).
 - Toutes les coordonnées que tu produis doivent être dans ce repère (0 <= x <= ${W}, 0 <= y <= ${H}).
 - Ne place JAMAIS une cible ou un point de départ sur un mur (type "wall").
+- Exploite les protections présentes (voitures, murets, buissons...) : positions de tir,
+  progressions à couvert, angles à couper — en respectant leur nature (dure/basse/concealment).
+- Si le terrain contient des points de départ prédéfinis (type "start_point" : D1, D2...),
+  tu DOIS choisir parmi eux : place ton overlay "start_point" exactement aux coordonnées du
+  point retenu, reprends son libellé (ex: "D2") et justifie ce choix dans le texte. Utilises-en
+  plusieurs seulement si le drill se joue par équipes ou par vagues. Sans point prédéfini,
+  choisis librement un départ pertinent.
 
 ## TERRAIN : ${terrain.name} (${terrain.type})
 ${describeElements(terrain)}

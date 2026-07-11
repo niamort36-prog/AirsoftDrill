@@ -53,7 +53,9 @@ const UI = (() => {
 
         if (history.replaceState) history.replaceState(null, '', '#' + sectionId);
         // La page Drill dépend des données des 3 autres : on la repeuple à l'ouverture.
-        if (sectionId === 'drill' && window.Drill) Drill.populate();
+        // NB : « typeof » et non « window.Drill » — un const de script global
+        // n'est PAS une propriété de window.
+        if (sectionId === 'drill' && typeof Drill !== 'undefined') Drill.populate();
     }
 
     // --- Mini-rendu markdown SÉCURISÉ (échappe d'abord, transforme ensuite)

@@ -424,6 +424,14 @@ select:disabled, input:disabled { opacity: 0.5; cursor: not-allowed; }
 }
 .tool-group { color: var(--muted); font-size: 0.85em; font-weight: 700; text-transform: uppercase; }
 .toolbar-spacer { flex-grow: 1; }
+.canvas-toolbar + .canvas-toolbar { margin-top: -6px; }
+.canvas-toolbar select {
+    width: auto;
+    min-height: var(--tap);
+    padding: 8px 10px;
+    flex: 0 1 auto;
+    font-size: 0.9em;
+}
 
 .tool-btn {
     min-height: var(--tap);
@@ -548,6 +556,7 @@ select:disabled, input:disabled { opacity: 0.5; cursor: not-allowed; }
 .result-legend span { display: flex; align-items: center; gap: 6px; }
 .lg { display: inline-block; width: 14px; height: 14px; border-radius: 3px; }
 .lg-start { background: #2ecc71; }
+.lg-start-cand { background: rgba(46, 204, 113, 0.25); border: 2px solid #1e8449; box-sizing: border-box; }
 .lg-target { background: #e74c3c; border-radius: 50%; }
 .lg-path { background: transparent; border-top: 3px dashed #b8860b; height: 0; width: 18px; }
 .lg-zone { background: rgba(155, 89, 182, 0.5); border-radius: 50%; }

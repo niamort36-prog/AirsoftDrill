@@ -40,18 +40,33 @@ GitHub Pages du dépôt. Rien d'autre à configurer.
 Squad          { id, name, pax: Pax[] }
 Pax            { id, name, role, equipment: Equipment[] }
 Equipment      { id, category, name, details }
-Terrain        { id, name, type, width: 900, height: 500, pixelsPerMeter: 20,
-                 elements: TerrainElement[], photo, thumbnail }
+Terrain        { id, name, type, width, height (px, calculés à la sauvegarde),
+                 pixelsPerMeter: 20, elements: TerrainElement[], photo, thumbnail }
 TerrainElement { type: wall|door_single|door_double|window|rect, x1,y1,x2,y2 }
                { type: brush_in|brush_out, points: [{x,y}] }
+               { type: cover_line, kind: muret|palissade, x1,y1,x2,y2 }
+               { type: cover_rect, kind: voiture|buisson|canape|bureau|lit,
+                 x,y (centre), w,h (px), rot (radians) }
+               { type: start_point, x, y, label: "D1"|"D2"|... }
 LogisticsItem  { id, name, qty, photo }
 SupportDoc     { id, title, type, kind: pdf|image|text, dataUrl|text, fileName }
 ```
 
-**Repère cartographique** : tous les terrains vivent dans un repère fixe de
-**900 × 500 px, 20 px = 1 m**, origine en haut à gauche. L'éditeur, la carte de
-résultat et l'IA utilisent le même repère — les coordonnées sont donc portables
-entre écrans et entre pages.
+**Repère cartographique** : coordonnées en pixels-monde, **20 px = 1 m**, origine en
+haut à gauche. L'éditeur est zoomable/déplaçable (molette, pincement, ✋) : on peut
+dessiner des terrains de toute taille ; l'emprise `width × height` est recalculée à la
+sauvegarde (minimum 900 × 500). L'éditeur, la carte de résultat et l'IA partagent ce
+repère — les coordonnées sont portables entre écrans et entre pages.
+
+**Éditeur de terrain** : aimantation des extrémités de murs (indicateur vert), contrainte
+d'angles 0/45/90° (📐, désactivable), portes **intégrées aux murs** (clic sur un mur,
+0,9 m / 1,8 m, coulissantes le long du mur), cotes discrètes masquables (📏), quadrillage
+5 m, et **protections** prédéfinies aux dimensions réelles (voiture, buisson, muret,
+palissade, canapé, bureau, lit) posées au clic et orientées au glisser — chacune est
+décrite tactiquement à l'IA (couverture dure / basse / concealment) via `js/schema.js`.
+On peut aussi placer un ou plusieurs **points de départ possibles** (🚩 D1, D2...) :
+l'IA doit alors choisir son départ parmi eux (plusieurs seulement si drill par équipes)
+et citer le libellé retenu dans le briefing.
 
 **Persistance** : IndexedDB (base `airsoftdrill`, stores `squads`, `terrains`,
 `logistics`, `docs`, `settings`). Choix motivé : localStorage est limité à ~5 Mo,

@@ -120,22 +120,37 @@
                 </div>
 
                 <div class="canvas-toolbar" role="toolbar" aria-label="Outils de dessin">
-                    <span class="tool-group">Zones :</span>
-                    <button type="button" class="tool-btn" onclick="TerrainEditor.setTool('rect', this)">🟩 Zone</button>
-                    <button type="button" class="tool-btn" onclick="TerrainEditor.setTool('brush_in', this)">🖌️ Pinceau int.</button>
-                    <button type="button" class="tool-btn" onclick="TerrainEditor.setTool('brush_out', this)">🌲 Pinceau ext.</button>
                     <span class="tool-group">Structure :</span>
-                    <button type="button" class="tool-btn active" onclick="TerrainEditor.setTool('wall', this)">🧱 Mur</button>
-                    <button type="button" class="tool-btn" onclick="TerrainEditor.setTool('door_single', this)">🚪 Porte</button>
-                    <button type="button" class="tool-btn" onclick="TerrainEditor.setTool('door_double', this)">🚪🚪 Double</button>
-                    <button type="button" class="tool-btn" onclick="TerrainEditor.setTool('window', this)">🪟 Fenêtre</button>
+                    <button type="button" class="tool-btn active" data-role="tool" onclick="TerrainEditor.setTool('wall', this)">🧱 Mur</button>
+                    <button type="button" class="tool-btn" data-role="tool" onclick="TerrainEditor.setTool('door_single', this)" title="Cliquez sur un mur pour y intégrer une porte de 0,9 m">🚪 Porte 0,9 m</button>
+                    <button type="button" class="tool-btn" data-role="tool" onclick="TerrainEditor.setTool('door_double', this)" title="Cliquez sur un mur pour y intégrer une porte double de 1,8 m">🚪🚪 1,8 m</button>
+                    <button type="button" class="tool-btn" data-role="tool" onclick="TerrainEditor.setTool('window', this)">🪟 Fenêtre</button>
+                    <span class="tool-group">Zones :</span>
+                    <button type="button" class="tool-btn" data-role="tool" onclick="TerrainEditor.setTool('rect', this)">🟩 Zone</button>
+                    <button type="button" class="tool-btn" data-role="tool" onclick="TerrainEditor.setTool('brush_in', this)">🖌️ Int.</button>
+                    <button type="button" class="tool-btn" data-role="tool" onclick="TerrainEditor.setTool('brush_out', this)">🌲 Ext.</button>
+                    <span class="tool-group">Protections :</span>
+                    <button type="button" id="cover-tool-btn" class="tool-btn" data-role="tool" onclick="TerrainEditor.setTool('cover', this)" title="Posez la protection d'un clic ; glissez pour l'orienter">🛡️ Poser</button>
+                    <select id="cover-kind-select" aria-label="Type de protection"></select>
+                    <span class="tool-group">Tactique :</span>
+                    <button type="button" class="tool-btn" data-role="tool" onclick="TerrainEditor.setTool('start_point', this)" title="Placez un ou plusieurs points de départ possibles (D1, D2...) ; l'IA choisira le plus pertinent">🚩 Départ</button>
+                </div>
+
+                <div class="canvas-toolbar" role="toolbar" aria-label="Affichage et corrections">
+                    <button type="button" class="tool-btn" data-role="tool" onclick="TerrainEditor.setTool('pan', this)">✋ Déplacer</button>
+                    <button type="button" class="tool-btn" onclick="TerrainEditor.zoomOut()" aria-label="Dézoomer">➖</button>
+                    <span id="zoom-level" class="tool-group" aria-live="polite">100 %</span>
+                    <button type="button" class="tool-btn" onclick="TerrainEditor.zoomIn()" aria-label="Zoomer">➕</button>
+                    <button type="button" class="tool-btn" onclick="TerrainEditor.zoomFit()">🔍 Ajuster</button>
+                    <button type="button" class="tool-btn active" onclick="TerrainEditor.toggleOrtho(this)" title="Contraint les tracés à 0/45/90°">📐 Angles droits</button>
+                    <button type="button" class="tool-btn active" onclick="TerrainEditor.toggleLabels(this)" title="Affiche ou masque les cotes">📏 Cotes</button>
                     <span class="toolbar-spacer"></span>
                     <button type="button" class="tool-btn" onclick="TerrainEditor.undo()">↩️ Annuler</button>
                     <button type="button" class="tool-btn tool-btn-danger" onclick="TerrainEditor.clear()">🗑️ Tout effacer</button>
                 </div>
 
                 <canvas id="terrain-canvas" aria-label="Zone de dessin du plan de terrain"></canvas>
-                <p class="canvas-hint">Échelle : 1 m = 20 px — les cotes s'affichent automatiquement pendant le dessin.</p>
+                <p class="canvas-hint">Échelle : 1 m = 20 px · molette ou pincement pour zoomer · les extrémités de murs s'aimantent entre elles · <span id="terrain-dims">emprise dessinée : —</span></p>
             </div>
 
             <div class="panel">
@@ -286,7 +301,8 @@
                             <canvas id="drill-result-canvas" aria-label="Carte du drill : annotations de l'IA et annotations manuelles"></canvas>
                         </div>
                         <div class="result-legend" aria-hidden="true">
-                            <span><i class="lg lg-start"></i> Départ</span>
+                            <span><i class="lg lg-start-cand"></i> Départ possible</span>
+                            <span><i class="lg lg-start"></i> Départ choisi</span>
                             <span><i class="lg lg-target"></i> Cible</span>
                             <span><i class="lg lg-path"></i> Trajet</span>
                             <span><i class="lg lg-zone"></i> Zone</span>
